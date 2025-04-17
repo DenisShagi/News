@@ -60,7 +60,7 @@ const Main = () => {
 			) : (
 				<Skeleton type={'item'} count={10} />
 			)}
-
+ 
 			<Pagination
 				totalPages={totalPages}
 				handleNextPage={handleNextPage}

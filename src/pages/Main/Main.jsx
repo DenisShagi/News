@@ -1,72 +1,87 @@
-import { useEffect, useState } from 'react'
 import NewsBanner from '../../components/NewsBanner/NewsBanner'
 import styles from './styles.module.css'
-import { getNews } from '../../api/apiNews'
+import { getCategories, getNews } from '../../api/apiNews'
 import NewsList from '../../components/NewsList/NewsList'
-import Skeleton from '../../components/Skeleton/Skeleton'
 import Pagination from '../../components/Pagination/Pagination'
+import Categories from '../../components/Categories/Categories'
+import { useDebounce } from '../../helpers/hooks/useDebounce'
+import { PAGE_SIZE, TOTAL_PAGES } from '../../constants/contants'
+import { useFetch } from '../../helpers/hooks/useFetch'
+import { useFilters } from '../../helpers/hooks/useFilters'
 
 const Main = () => {
-	const [news, setNews] = useState([])
-	const [isLoading, setIsLoading] = useState(true)
-	const [currentPage, setCurrentPage] = useState(1)
-	const totalPages = 10
-	const pageSize = 10
+	const { filters, changeFilter } = useFilters({
+		page_number: 1,
+		page_size: PAGE_SIZE,
+		category: null,
+		keyWords: '',
+	})
 
-	const fetchNews = async currentPage => {
-		try {
-			setIsLoading(true)
-			const response = await getNews(currentPage, pageSize)
-			setNews(response.news)
-			setIsLoading(false)
-		} catch (error) {
-			console.log(error)
-		}
-	}
-	useEffect(() => {
-		fetchNews(currentPage)
-	}, [currentPage])
+	const debouncedKeyWords = useDebounce(filters.keyWords, 500)
+
+	const { data, isLoading } = useFetch(getNews, {
+		...filters,
+		keyWords: debouncedKeyWords,
+	})
+
+	const { data: dataCategories } = useFetch(getCategories)
 
 	const handleNextPage = () => {
-		if (currentPage < totalPages) {
-			setCurrentPage(currentPage + 1)
+		if (filters.page_number < TOTAL_PAGES) {
+			changeFilter('page_number', filters.page_number + 1)
 		}
 	}
 	const handlePrevPage = () => {
-		if (currentPage > 1) {
-			setCurrentPage(currentPage - 1)
+		if (filters.page_number > 1) {
+			changeFilter('page_number', filters.page_number - 1)
 		}
 	}
 
 	const handlePageClick = pageNumber => {
-		setCurrentPage(pageNumber)
+		changeFilter('page_number', pageNumber)
 	}
+
+	// const handleCategoryChange = category => {
+	// 	setCurrentPage(1)
+	// 	setSelectedCategory(category)
+	// }
+
 	return (
 		<main className={styles.main}>
-			{news.length > 0 && !isLoading ? (
-				<NewsBanner item={news[0]} />
-			) : (
-				<Skeleton type={'banner'} count={1} />
-			)}
-			<Pagination
-				totalPages={totalPages}
-				handleNextPage={handleNextPage}
-				handlePrevPage={handlePrevPage}
-				handlePageClick={handlePageClick}
-				currentPage={currentPage}
+			{dataCategories ? (
+				<Categories
+					categories={dataCategories.categories}
+					setSelectedCategory={category => changeFilter('category', category)}
+					selectedCategory={filters.category}
+				/>
+			) : null}
+
+			<Search
+				keyWords={filters.keyWords}
+				setKeyWords={keyWords => changeFilter('keyWords', keyWords)}
 			/>
-			{!isLoading ? (
-				<NewsList news={news} />
-			) : (
-				<Skeleton type={'item'} count={10} />
-			)}
- 
+
+			<NewsBanner
+				isLoading={isLoading}
+				item={data && data.news && data.news[0]}
+			/>
+
 			<Pagination
-				totalPages={totalPages}
+				totalPages={TOTAL_PAGES}
 				handleNextPage={handleNextPage}
 				handlePrevPage={handlePrevPage}
 				handlePageClick={handlePageClick}
-				currentPage={currentPage}
+				currentPage={filters.page_number}
+			/>
+
+			<NewsList isLoading={isLoading} news={data?.news} />
+
+			<Pagination
+				totalPages={TOTAL_PAGES}
+				handleNextPage={handleNextPage}
+				handlePrevPage={handlePrevPage}
+				handlePageClick={handlePageClick}
+				currentPage={filters.page_number}
 			/>
 		</main>
 	)

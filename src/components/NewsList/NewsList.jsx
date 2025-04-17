@@ -1,8 +1,13 @@
-import React from 'react'
+import NewsItem from '../NewsItem/NewsItem'
+import styles from './styles.module.css'
 
-const NewsList = () => {
+const NewsList = ({news}) => {
 	return (
-		<div>NewsList</div>
+		<ul className={styles.list}>
+			{news.map(item => (
+				<NewsItem key={item.id} item={item} />
+			))}
+		</ul>
 	)
 }
 

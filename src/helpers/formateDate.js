@@ -3,22 +3,20 @@ export const formatDate = date => {
 	return date.toLocaleDateString('en-US', options)
 }
 
-export const formatTimeAgo = (dateString) => {
+export const formatTimeAgo = dateInput => {
 	const now = new Date()
-	const date = new Date(dateString)
-	const secondPast = (now.getTime()) - (date.getTime()) / 1000
+	const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
+	const secondsPast = (now.getTime() - date.getTime()) / 1000
 
-	if(secondPast < 60){
-		return `${Math.floor(secondPast)}s ago`
+	if (secondsPast < 60) {
+		return `${Math.floor(secondsPast)}s ago`
 	}
-	if (secondPast < 3600) {
-		return `${Math.floor(secondPast)}m ago`
+	if (secondsPast < 3600) {
+		return `${Math.floor(secondsPast / 60)}m ago`
 	}
-	if (secondPast <= 86400) {
-		return `${Math.floor(secondPast)}h ago`
+	if (secondsPast < 86400) {
+		return `${Math.floor(secondsPast / 3600)}h ago`
 	}
-	if (secondPast > 86400) {
-		const day = Math.floor(secondPast / 86400)  
-		return day === 1 ? `${day} day ago` : `${day} day's ago`
-	}
+	const days = Math.floor(secondsPast / 86400)
+	return days === 1 ? `1 day ago` : `${days} days ago`
 }
